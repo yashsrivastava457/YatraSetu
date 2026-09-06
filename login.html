@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>YatraSetu Login</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+<style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+        --navy:#241a17;--navy2:#3a2922;--blue:#a05a2c;--blue2:#c47a45;
+        --pale:#f5e8dc;--pale2:#f7f3ef;--white:#fff;
+        --text:#30251f;--muted:#766b63;--line:#e4d9cf;
+        --shadow:0 14px 40px rgba(68,45,32,.09);
+    }
+    html{scroll-behavior:smooth}
+    body{
+        min-height:100vh;
+        font-family:Inter,"Segoe UI",Arial,sans-serif;
+        background:var(--pale2);
+        color:var(--text);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:30px 20px;
+        position:relative;
+    }
+    body::before{
+        content:"";
+        position:fixed;
+        inset:0;
+        pointer-events:none;
+        opacity:.22;
+        background-image:
+          radial-gradient(circle at 15% 20%,rgba(160,90,44,.06) 0 1px,transparent 1px),
+          radial-gradient(circle at 80% 70%,rgba(90,55,35,.045) 0 1px,transparent 1px);
+        background-size:24px 24px,32px 32px;
+        z-index:-1;
+    }
+    .login-container{width:100%;max-width:430px}
+    .login-card{
+        background:#fff;
+        padding:40px;
+        border-radius:22px;
+        border:1px solid var(--line);
+        box-shadow:var(--shadow);
+    }
+    .logo{
+        width:48px;height:48px;border-radius:14px;
+        background:linear-gradient(135deg,#955027,#c47a45);
+        color:#fff;
+        display:grid;place-items:center;
+        font-size:26px;
+        margin-bottom:25px;
+        box-shadow:0 10px 24px rgba(92,52,30,.18);
+    }
+    h1{font-size:30px;letter-spacing:-.7px;color:var(--navy);margin-bottom:10px}
+    .subtitle{color:var(--muted);font-size:13px;line-height:1.7;margin-bottom:30px}
+    label{display:block;font-size:11px;font-weight:800;color:var(--muted);margin-bottom:7px}
+    input{
+        width:100%;padding:13px 14px;
+        border:1px solid var(--line);border-radius:10px;
+        background:#fdfcfb;color:var(--text);
+        font-size:13px;outline:none;margin-bottom:18px;
+    }
+    input:focus{border-color:var(--blue2);box-shadow:0 0 0 3px rgba(196,122,69,.12)}
+    button{
+        width:100%;padding:14px;border:0;border-radius:10px;
+        background:linear-gradient(135deg,#955027,#bd7544);
+        color:#fff;font-size:12px;font-weight:800;cursor:pointer;
+        box-shadow:0 8px 18px rgba(120,67,36,.15);
+        transition:.2s;
+    }
+    button:hover{background:linear-gradient(135deg,#7f421f,#a85f32);transform:translateY(-1px)}
+    .back{
+        display:block;text-align:center;margin-top:20px;
+        color:var(--muted);text-decoration:none;font-size:11px;
+    }
+    .back:hover{color:var(--blue)}
+    .error,.success{
+        display:none;padding:10px 12px;border-radius:8px;
+        font-size:11px;margin-bottom:18px;
+    }
+    .error{background:#f8e8df;color:#a64d28}
+    .success{background:#eaf3ec;color:#2f7a4b}
+    .site-footer{
+        position:fixed;bottom:12px;left:0;right:0;
+        text-align:center;color:var(--muted);font-size:10px;
+    }
+    .site-footer strong{color:var(--navy2)}
+    @media(max-width:520px){
+        body{padding:20px 15px 55px}
+        .login-card{padding:28px 24px}
+        h1{font-size:26px}
+    }
+</style>
+
+
+</head>
+
+
+<body>
+
+    <div class="login-container">
+
+        <div class="login-card">
+
+            <div class="logo">ॐ</div>
+
+            <h1 id="loginTitle">
+                Login
+            </h1>
+
+            <p
+                class="subtitle"
+                id="loginSubtitle"
+            >
+                Sign in to YatraSetu
+            </p>
+
+
+            <div
+                class="error"
+                id="errorMessage"
+            ></div>
+
+
+            <div
+                class="success"
+                id="successMessage"
+            ></div>
+
+
+            <form id="loginForm">
+
+                <label for="email">
+                    Email
+                </label>
+
+                <input
+                    type="email"
+                    id="email"
+                    placeholder="Enter your email"
+                    required
+                >
+
+
+                <label for="password">
+                    Password
+                </label>
+
+                <input
+                    type="password"
+                    id="password"
+                    placeholder="Enter your password"
+                    required
+                >
+
+
+                <button type="submit">
+                    Login →
+                </button>
+
+            </form>
+
+
+            <a
+                href="home.html"
+                class="back"
+            >
+                ← Back to YatraSetu
+            </a>
+
+        </div>
+
+    </div>
+
+<script>
+
+    // -------------------------------
+    // Detect login type
+    // -------------------------------
+
+    const params =
+        new URLSearchParams(window.location.search);
+
+    const loginType =
+        params.get("type");
+
+
+    const title =
+        document.getElementById("loginTitle");
+
+    const subtitle =
+        document.getElementById("loginSubtitle");
+
+    const errorMessage =
+        document.getElementById("errorMessage");
+
+    const successMessage =
+        document.getElementById("successMessage");
+
+    const loginForm =
+        document.getElementById("loginForm");
+
+
+    // -------------------------------
+    // Change page according to portal
+    // -------------------------------
+
+    if (loginType === "super") {
+
+        title.textContent =
+            "Super Admin Login";
+
+        subtitle.textContent =
+            "Access and manage all YatraSetu temples.";
+
+    }
+
+    else if (loginType === "temple") {
+
+        title.textContent =
+            "Temple Admin Login";
+
+        subtitle.textContent =
+            "Login to manage your temple.";
+
+    }
+
+    else {
+
+        title.textContent =
+            "YatraSetu Login";
+
+        subtitle.textContent =
+            "Sign in to continue.";
+
+    }
+
+
+    // -------------------------------
+    // Login
+    // -------------------------------
+
+    loginForm.addEventListener(
+        "submit",
+        async function (event) {
+
+            event.preventDefault();
+
+
+            errorMessage.style.display = "none";
+            successMessage.style.display = "none";
+
+
+            const email =
+                document.getElementById("email").value.trim();
+
+            const password =
+                document.getElementById("password").value;
+
+
+            try {
+
+                const { data, error } =
+                    await supabaseClient.auth.signInWithPassword({
+                        email: email,
+                        password: password
+                    });
+
+
+                if (error) {
+
+                    throw error;
+
+                }
+
+
+                // -------------------------------
+                // Get YatraSetu user profile
+                // -------------------------------
+
+                const authUser =
+                    data.user;
+
+
+                const { data: profile, error: profileError } =
+                    await supabaseClient
+                        .from("users")
+                        .select("*")
+                        .eq("auth_user_id", authUser.id)
+                        .single();
+
+
+                if (profileError || !profile) {
+
+                    await supabaseClient.auth.signOut();
+
+                    throw new Error(
+                        "YatraSetu user profile not found."
+                    );
+
+                }
+
+
+                // -------------------------------
+                // Check requested portal
+                // -------------------------------
+
+                if (loginType === "super") {
+
+                    if (profile.roles !== "SUPER_ADMIN") {
+
+                        await supabaseClient.auth.signOut();
+
+                        throw new Error(
+                            "You are not authorized as Super Admin."
+                        );
+
+                    }
+
+                }
+
+
+                if (loginType === "temple") {
+
+                    if (profile.roles !== "TEMPLE_ADMIN") {
+
+                        await supabaseClient.auth.signOut();
+
+                        throw new Error(
+                            "You are not authorized as Temple Admin."
+                        );
+
+                    }
+
+                    if (!profile.temple_id) {
+
+                        await supabaseClient.auth.signOut();
+
+                        throw new Error(
+                            "No temple is assigned to this account."
+                        );
+
+                    }
+
+                }
+
+
+                // -------------------------------
+                // Save basic session information
+                // -------------------------------
+
+                localStorage.setItem(
+                    "yatrasetu_role",
+                    profile.roles
+                );
+
+
+                localStorage.setItem(
+                    "yatrasetu_temple_id",
+                    profile.temple_id || ""
+                );
+
+
+                // -------------------------------
+                // Redirect
+                // -------------------------------
+
+                successMessage.textContent =
+                    "Login successful. Redirecting...";
+
+                successMessage.style.display =
+                    "block";
+
+
+                setTimeout(function () {
+
+                    if (
+                        profile.roles ===
+                        "SUPER_ADMIN"
+                    ) {
+
+                        window.location.href =
+                            "super-admin.html";
+
+                    }
+
+                    else if (
+                        profile.roles ===
+                        "TEMPLE_ADMIN"
+                    ) {
+
+                        window.location.href =
+                            `index.html?temple_id=${encodeURIComponent(profile.temple_id)}`;
+
+                    }
+
+                }, 500);
+
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "Login error:",
+                    error
+                );
+
+                errorMessage.textContent =
+                    error.message ||
+                    "Login failed.";
+
+                errorMessage.style.display =
+                    "block";
+
+            }
+
+        }
+    );
+
+</script>
+
+    <footer class="site-footer">Made by <strong>Yash@Xalien</strong></footer>
+
+</body>
+
+</html>

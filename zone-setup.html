@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Zone Setup | YatraSetu</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+</head>
+
+<body>
+
+<div class="zone-page">
+
+    <div class="zone-card">
+
+        <div class="brand">
+            <div class="brand-logo">ॐ</div>
+
+            <div>
+                <h2>YatraSetu</h2>
+                <span>Safe • Secure • Smart</span>
+            </div>
+        </div>
+
+        <div class="zone-header">
+
+            <span class="setup-badge" id="setupBadge">
+                TEMPLE CONFIGURATION
+            </span>
+
+            <h1 id="pageTitle">Configure your zones</h1>
+
+            <p id="pageDescription">
+                Create the monitoring zones for this temple.
+                Only zones belonging to this temple are shown here.
+            </p>
+
+        </div>
+
+        <div class="add-zone-box">
+
+            <h3>Add New Zone</h3>
+
+            <div class="zone-form">
+
+                <div class="form-group">
+
+                    <label for="zoneName">Zone Name</label>
+
+                    <input
+                        type="text"
+                        id="zoneName"
+                        maxlength="100"
+                        placeholder="e.g. Main Gate"
+                    >
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="zoneType">Zone Type</label>
+
+                    <select id="zoneType">
+
+                        <option value="ENTRANCE">Entrance</option>
+                        <option value="QUEUE">Queue</option>
+                        <option value="DARSHAN">Darshan Area</option>
+                        <option value="PARKING">Parking</option>
+                        <option value="EXIT">Exit</option>
+                        <option value="OTHER">Other</option>
+
+                    </select>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="zoneCapacity">Capacity</label>
+
+                    <input
+                        type="number"
+                        id="zoneCapacity"
+                        min="1"
+                        step="1"
+                        placeholder="Maximum people"
+                    >
+
+                </div>
+
+            </div>
+
+            <button
+                class="setup-btn"
+                id="addZoneBtn"
+                type="button"
+            >
+                + Add Zone
+            </button>
+
+        </div>
+
+        <div class="zones-section">
+
+            <div class="zones-title">
+
+                <div>
+                    <h3>Configured Zones</h3>
+                    <p id="zoneCount">0 zones added</p>
+                </div>
+
+            </div>
+
+            <div id="zonesList">
+
+                <div class="empty-zone">
+                    No zones added yet.
+                </div>
+
+            </div>
+
+        </div>
+
+        <div
+            id="zoneMessage"
+            class="form-message"
+        ></div>
+
+        <button
+            class="continue-btn"
+            id="continueBtn"
+            disabled
+            type="button"
+        >
+            Continue to Dashboard →
+        </button>
+
+    </div>
+
+</div>
+
+<script>
+
+const API_URL = "";
+
+const params = new URLSearchParams(window.location.search);
+const isSuperAdmin = params.get("mode") === "super";
+
+const templeId =
+    params.get("temple_id") ||
+    localStorage.getItem("yatrasetu_temple_id");
+
+const zoneName = document.getElementById("zoneName");
+const zoneType = document.getElementById("zoneType");
+const zoneCapacity = document.getElementById("zoneCapacity");
+
+const addZoneBtn = document.getElementById("addZoneBtn");
+const zonesList = document.getElementById("zonesList");
+const zoneCount = document.getElementById("zoneCount");
+const zoneMessage = document.getElementById("zoneMessage");
+const continueBtn = document.getElementById("continueBtn");
+const pageTitle = document.getElementById("pageTitle");
+const pageDescription = document.getElementById("pageDescription");
+
+if (isSuperAdmin) {
+    document.title = "Zone Setup | Super Admin | YatraSetu";
+    document.getElementById("setupBadge").textContent = "SUPER ADMIN • ZONE CONFIGURATION";
+} else {
+    document.getElementById("setupBadge").textContent = "TEMPLE ADMIN • ZONE CONFIGURATION";
+}
+
+async function getSession() {
+    const { data: { session }, error } = await supabaseClient.auth.getSession();
+    if (error || !session) { throw new Error("Login session expired. Please login again."); }
+    return session;
+}
+
+async function authorizedFetch(url, options = {}) {
+    const session = await getSession();
+    options.headers = { ...(options.headers || {}), Authorization: `Bearer ${session.access_token}` };
+    return fetch(url, options);
+}
+
+
+function setMessage(message, success = false) {
+
+    zoneMessage.textContent = message;
+
+    zoneMessage.classList.toggle(
+        "success",
+        success
+    );
+}
+
+
+function escapeHtml(value) {
+
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+
+}
+
+
+function getZoneIcon(type) {
+
+    const icons = {
+        ENTRANCE: "↗",
+        QUEUE: "≡",
+        DARSHAN: "◉",
+        PARKING: "P",
+        EXIT: "↘",
+        OTHER: "•"
+    };
+
+    return icons[type] || "•";
+
+}
+
+
+function formatType(type) {
+
+    const names = {
+        ENTRANCE: "Entrance",
+        QUEUE: "Queue",
+        DARSHAN: "Darshan Area",
+        PARKING: "Parking",
+        EXIT: "Exit",
+        OTHER: "Other"
+    };
+
+    return names[type] || "Other";
+
+}
+
+
+async function loadTemple() {
+
+    const response = await authorizedFetch(
+        `${API_URL}/api/temples/${encodeURIComponent(templeId)}`,
+        { cache: "no-store" }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(
+            data.detail || "Unable to load temple."
+        );
+    }
+
+    pageTitle.textContent =
+        `Configure zones for ${data.name}`;
+
+    pageDescription.textContent =
+        `Create the monitoring zones for ${data.name}. Only this temple's zones are shown.`;
+
+    document.title =
+        `Zone Setup | ${data.name} | YatraSetu`;
+}
+
+
+async function loadZones() {
+
+    if (!templeId) return;
+
+    const response = await authorizedFetch(
+        `${API_URL}/api/temples/${encodeURIComponent(templeId)}/zones`,
+        { cache: "no-store" }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(
+            result.detail || "Unable to load zones."
+        );
+    }
+
+    const zones =
+        Array.isArray(result)
+            ? result
+            : [];
+
+    renderZones(zones);
+}
+
+
+function renderZones(zones) {
+
+    if (!zones.length) {
+
+        zonesList.innerHTML = `
+            <div class="empty-zone">
+                No zones added yet.
+            </div>
+        `;
+
+        zoneCount.textContent =
+            "0 zones added";
+
+        continueBtn.disabled = true;
+
+        return;
+    }
+
+    zoneCount.textContent =
+        `${zones.length} zone${zones.length > 1 ? "s" : ""} added`;
+
+    continueBtn.disabled = false;
+
+    zonesList.innerHTML = zones.map(z => {
+
+        const capacity =
+            Number(z.capacity) || 0;
+
+        const type =
+            String(z.type || "OTHER").toUpperCase();
+
+        return `
+            <div class="zone-item">
+
+                <div class="zone-icon">
+                    ${getZoneIcon(type)}
+                </div>
+
+                <div class="zone-info">
+
+                    <h4>
+                        ${escapeHtml(z.name)}
+                    </h4>
+
+                    <span>
+                        ${formatType(type)}
+                    </span>
+
+                </div>
+
+                <div class="zone-capacity">
+
+                    <strong>
+                        ${capacity.toLocaleString()}
+                    </strong>
+
+                    <span>
+                        capacity
+                    </span>
+
+                </div>
+
+            </div>
+        `;
+
+    }).join("");
+}
+
+
+async function addZone() {
+
+    const name =
+        zoneName.value.trim();
+
+    const type =
+        zoneType.value;
+
+    const capacity =
+        Number(zoneCapacity.value);
+
+    if (!name) {
+
+        setMessage("Please enter a zone name.");
+
+        zoneName.focus();
+
+        return;
+    }
+
+    if (
+        !Number.isInteger(capacity) ||
+        capacity < 1
+    ) {
+
+        setMessage(
+            "Please enter a valid capacity."
+        );
+
+        zoneCapacity.focus();
+
+        return;
+    }
+
+    if (!templeId) {
+
+        setMessage(
+            "Temple ID is missing. Please create/select a temple first."
+        );
+
+        return;
+    }
+
+    addZoneBtn.disabled = true;
+    setMessage("Adding zone...");
+
+    try {
+
+        const query = new URLSearchParams({
+            name,
+            type,
+            capacity: String(capacity)
+        });
+
+        const response = await authorizedFetch(
+            `${API_URL}/api/temples/${encodeURIComponent(templeId)}/zones?${query.toString()}`,
+            { method: "POST" }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                result.detail ||
+                "Unable to add zone."
+            );
+        }
+
+        zoneName.value = "";
+        zoneCapacity.value = "";
+
+        setMessage(
+            `✓ ${result.zone_name} added successfully.`,
+            true
+        );
+
+        await loadZones();
+
+        zoneName.focus();
+
+    } catch (error) {
+
+        console.error(
+            "Add zone error:",
+            error
+        );
+
+        setMessage(
+            error.message ||
+            "Unable to add zone."
+        );
+
+    } finally {
+
+        addZoneBtn.disabled = false;
+
+    }
+}
+
+
+addZoneBtn.addEventListener(
+    "click",
+    addZone
+);
+
+
+zoneName.addEventListener(
+    "keydown",
+    event => {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            addZone();
+        }
+    }
+);
+
+
+zoneCapacity.addEventListener(
+    "keydown",
+    event => {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            addZone();
+        }
+    }
+);
+
+
+continueBtn.addEventListener(
+    "click",
+    () => {
+
+        if (!templeId) return;
+
+        window.location.href =
+            `index.html?temple_id=${encodeURIComponent(templeId)}`;
+
+    }
+);
+
+
+async function initialize() {
+
+    if (!templeId) {
+
+        setMessage(
+            "Temple ID is missing. Please create a temple first."
+        );
+
+        addZoneBtn.disabled = true;
+        continueBtn.disabled = true;
+
+        return;
+    }
+
+    try {
+
+        await loadTemple();
+        await loadZones();
+
+    } catch (error) {
+
+        console.error(error);
+
+        setMessage(
+            error.message ||
+            "Unable to initialize zone setup."
+        );
+
+        addZoneBtn.disabled = true;
+
+    }
+
+}
+
+
+initialize();
+
+</script>
+
+    <footer class="site-footer">Made by <strong>Yash@Xalien</strong></footer>
+
+</body>
+
+</html>

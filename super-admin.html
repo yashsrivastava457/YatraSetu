@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YatraSetu | Super Admin</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="admin-page">
+<header class="admin-header">
+<div class="brand"><div class="brand-logo">ॐ</div><div><h2>YatraSetu</h2><span>Super Admin Panel</span></div></div>
+<button class="logout-btn" id="logoutBtn">Logout</button>
+</header>
+<main class="admin-main">
+<div class="page-top"><div><h1>Super Admin Dashboard</h1><p>Manage all temples registered with YatraSetu.</p></div>
+<button class="add-temple-btn" id="openTempleSetupBtn">+ Add Temple</button></div>
+<section class="stats">
+<div class="stat-card"><p>Total Temples</p><h2 id="totalTemples">0</h2></div>
+<div class="stat-card"><p>Active Temples</p><h2 id="activeTemples">0</h2></div>
+<div class="stat-card"><p>Total Zones</p><h2 id="totalZones">0</h2></div>
+</section>
+<section class="temples-section"><div class="section-heading"><h2>Registered Temples</h2></div>
+<div class="temple-list" id="templeList"><p class="loading">Loading temples...</p></div></section>
+</main>
+<footer class="site-footer">Made by <strong>Yash@Xalien</strong></footer>
+<div class="modal temple-view-modal" id="templeViewModal">
+  <div class="modal-box">
+    <button class="modal-close" id="closeTempleView">×</button>
+    <h2 id="viewTempleTitle">Temple</h2>
+    <p class="modal-subtitle">Temple Management</p>
+    <div class="temple-detail">
+      <strong id="viewTempleLocation"></strong>
+      <p id="viewTempleMeta"></p>
+    </div>
+    <h3 style="margin-bottom:6px">Temple Admin</h3>
+    <p class="modal-subtitle">Create or assign the administrator for this temple.</p>
+    <form id="adminForm">
+      <label>Admin Name<input id="newAdminName" required placeholder="Enter admin name"></label>
+      <label>Admin Email<input id="newAdminEmail" type="email" required placeholder="admin@example.com"></label>
+      <label>Password<input id="newAdminPassword" type="password" minlength="6" required placeholder="Minimum 6 characters"></label>
+      <div id="adminMessage" class="admin-message"></div>
+      <div class="modal-actions">
+        <button class="secondary-btn" type="button" id="openTempleDashboard">Open Dashboard</button>
+        <button class="add-temple-btn" type="submit" id="createAdminBtn">Create Temple Admin</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+const API_URL="";
+async function session(){
+ const {data:{session},error}=await supabaseClient.auth.getSession();
+ if(error||!session){location.href='home.html';return null;}
+ const {data:p,error:e}=await supabaseClient.from('users').select('roles').eq('auth_user_id',session.user.id).single();
+ if(e||!p||p.roles!=='SUPER_ADMIN'){await supabaseClient.auth.signOut();location.href='home.html';return null;}
+ return session;
+}
+async function api(path){const s=await session();if(!s)throw Error('Unauthorized');const r=await fetch(API_URL+path,{headers:{Authorization:'Bearer '+s.access_token},cache:'no-store'});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.detail||'Request failed');return d;}
+function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');}
+function viewTemple(id){location.href=`index.html?temple_id=${encodeURIComponent(id)}`;}
+document.getElementById('openTempleSetupBtn').onclick=()=>location.href='temple-setup.html?mode=super';
+document.getElementById('logoutBtn').onclick=async()=>{await supabaseClient.auth.signOut();location.href='home.html';};
+const templeViewModal=document.getElementById("templeViewModal");
+const adminForm=document.getElementById("adminForm");
+const adminMessage=document.getElementById("adminMessage");
+let selectedTempleId=null;
+function openTempleView(id,name,location,zones){
+ selectedTempleId=id;
+ document.getElementById("viewTempleTitle").textContent=name;
+ document.getElementById("viewTempleLocation").textContent=location||"Location not available";
+ document.getElementById("viewTempleMeta").textContent=`Temple ID: ${id} • ${zones} zone(s)`;
+ adminForm.reset(); adminMessage.textContent=""; adminMessage.className="admin-message";
+ templeViewModal.classList.add("show");
+}
+function closeTempleView(){templeViewModal.classList.remove("show");selectedTempleId=null}
+document.getElementById("closeTempleView").onclick=closeTempleView;
+templeViewModal.addEventListener("click",e=>{if(e.target===templeViewModal)closeTempleView()});
+document.getElementById("openTempleDashboard").onclick=()=>{if(selectedTempleId) location.href=`index.html?temple_id=${encodeURIComponent(selectedTempleId)}`};
+adminForm.addEventListener("submit",async e=>{
+ e.preventDefault();
+ const btn=document.getElementById("createAdminBtn"); btn.disabled=true; btn.textContent="Creating..."; adminMessage.textContent="";
+ try{
+  const s=await session(); if(!s) return;
+  const q=new URLSearchParams({temple_id:selectedTempleId,admin_name:document.getElementById("newAdminName").value.trim(),admin_email:document.getElementById("newAdminEmail").value.trim(),admin_password:document.getElementById("newAdminPassword").value});
+  const r=await fetch(`${API_URL}/api/admin/create-temple-admin?${q}`,{method:"POST",headers:{Authorization:`Bearer ${s.access_token}`}});
+  const d=await r.json(); if(!r.ok) throw new Error(d.detail||"Failed to create Temple Admin");
+  adminMessage.textContent=`✓ ${d.admin_name} created successfully.`; adminMessage.className="admin-message success"; adminForm.reset();
+ }catch(err){adminMessage.textContent=err.message;adminMessage.className="admin-message"}finally{btn.disabled=false;btn.textContent="Create Temple Admin"}
+});
+
+async function load(){try{
+ const temples=await api('/api/temples');
+ document.getElementById('totalTemples').textContent=temples.length;
+ document.getElementById('activeTemples').textContent=temples.length;
+ let zonesTotal=0; const list=document.getElementById('templeList');list.innerHTML='';
+ if(!temples.length){list.innerHTML='<p class="empty">No temples registered yet.</p>';}
+ for(const t of temples){const zones=await api(`/api/temples/${t.id}/zones`);zonesTotal+=zones.length;const card=document.createElement('div');card.className='temple-card';card.innerHTML=`<div class="temple-left"><div class="temple-icon">${esc(t.name).charAt(0).toUpperCase()||'T'}</div><div class="temple-info"><h3>${esc(t.name)}</h3><p>${esc(t.location)} • Temple ID: ${t.id} • ${zones.length} zone(s)</p></div></div><div class="temple-actions"><button class="view-btn" onclick="openTempleView(${t.id}, '${esc(t.name).replace("'", "\'")}', '${esc(t.location).replace("'", "\'")}', ${zones.length})">View →</button></div>`;list.appendChild(card);}
+ document.getElementById('totalZones').textContent=zonesTotal;
+}catch(e){console.error(e);document.getElementById('templeList').innerHTML=`<p class="error-text">${esc(e.message)}</p>`;}}
+load();
+</script></body></html>

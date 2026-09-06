@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>YatraSetu | Smart Pilgrimage Safety</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="home-page">
+
+    <header class="home-header">
+
+        <div class="brand">
+
+            <div class="brand-logo">ॐ</div>
+
+            <div>
+
+                <h2>YatraSetu</h2>
+
+                <span>
+                    Safe • Secure • Smart
+                </span>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <main class="home-container">
+
+        <section class="home-hero">
+
+            <span class="setup-badge">
+                SMART PILGRIMAGE SAFETY PLATFORM
+            </span>
+
+            <h1>
+                Safer journeys.<br>
+                Smarter temples.
+            </h1>
+
+            <p>
+                YatraSetu helps temples monitor crowd
+                movement, identify risks and manage
+                pilgrimage zones efficiently.
+            </p>
+
+        </section>
+
+
+        <section class="portal-section">
+
+            <h2>
+                Choose your portal
+            </h2>
+
+            <p>
+                Select the account type you want to access.
+            </p>
+
+
+            <div class="portal-grid">
+
+
+                <!-- SUPER ADMIN -->
+
+                <div class="portal-card">
+
+                    <div class="portal-icon">
+                        SA
+                    </div>
+
+                    <h3>
+                        Super Admin
+                    </h3>
+
+                    <p>
+                        Manage and monitor all temples
+                        registered with YatraSetu.
+                    </p>
+
+                    <button
+                        onclick="goToLogin('super')"
+                    >
+                        Super Admin Login →
+                    </button>
+
+                </div>
+
+
+                <!-- TEMPLE ADMIN -->
+
+                <div class="portal-card">
+
+                    <div class="portal-icon">
+                        TA
+                    </div>
+
+                    <h3>
+                        Temple Admin
+                    </h3>
+
+                    <p>
+                        Manage your temple, zones,
+                        crowd monitoring and safety data.
+                    </p>
+
+                    <button
+                        onclick="goToLogin('temple')"
+                    >
+                        Temple Admin Login →
+                    </button>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer class="site-footer">
+
+        <p>© 2026 YatraSetu • Safe • Secure • Smart &nbsp;|&nbsp; Made by <strong>Yash@Xalien</strong></p>
+
+    </footer>
+
+
+    <script>
+
+        function goToLogin(type) {
+
+            window.location.href =
+                `login.html?type=${type}`;
+
+        }
+
+    </script>
+
+</body>
+
+</html>

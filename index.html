@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b1f3a">
+
+    <title>YatraSetu | Temple Dashboard</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+.super-controls{display:none;margin:0 0 28px}
+.super-controls.show{display:block}
+.super-controls .control-grid{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:12px}
+.super-controls input,.super-controls select{width:100%;padding:11px 12px;border:1px solid #e2d8ce;border-radius:10px;background:#fffdfb;outline:none}
+.super-controls input:focus,.super-controls select:focus{border-color:#b96d3d;box-shadow:0 0 0 3px rgba(185,109,61,.1)}
+.super-controls .control-actions{display:flex;gap:9px;margin-top:12px;flex-wrap:wrap}
+.super-controls button{border:0;border-radius:9px;padding:10px 14px;font-weight:700;font-size:12px}
+.admin-primary{background:#955027;color:#fff}
+.admin-danger{background:#f4dfd9;color:#8f3025}
+.admin-neutral{background:#eee7e1;color:#4b3b31}
+.admin-zone-list{display:grid;gap:9px;margin-top:15px}
+.admin-zone-row{display:grid;grid-template-columns:1.3fr .7fr .7fr auto;gap:10px;align-items:center;padding:12px;border:1px solid #e7ddd4;border-radius:12px;background:#fffdfb}
+.admin-zone-row strong{font-size:13px}.admin-zone-row span{font-size:11px;color:#766b63}
+.admin-zone-row button{padding:8px 11px}
+.admin-message{margin-top:10px;font-size:12px;min-height:18px}
+@media(max-width:800px){.super-controls .control-grid,.admin-zone-row{grid-template-columns:1fr}.admin-zone-row button{width:100%}}
+</style>
+
+
+<style>
+.temple-zone-access {
+    display: none;
+    margin: 0 0 24px;
+}
+.temple-zone-access.show {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 18px;
+    border: 1px solid #e7ddd4;
+    border-radius: 14px;
+    background: #fffdfb;
+}
+.temple-zone-access h3 {
+    margin: 0 0 4px;
+    font-size: 15px;
+}
+.temple-zone-access p {
+    margin: 0;
+    font-size: 12px;
+    color: #766b63;
+}
+.temple-zone-access button {
+    border: 0;
+    border-radius: 9px;
+    padding: 11px 15px;
+    background: #955027;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+@media(max-width:700px) {
+    .temple-zone-access.show {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="app-shell">
+
+    <aside class="sidebar" id="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-mark">
+                ॐ
+            </div>
+
+            <div>
+
+                <h1>YatraSetu</h1>
+
+                <p>Smart Pilgrimage Safety</p>
+
+            </div>
+
+        </div>
+
+
+        <nav class="nav">
+
+            <a
+                href="#dashboard"
+                class="nav-link active"
+            >
+                <span>▦</span>
+                Dashboard
+            </a>
+
+
+            <a
+                href="#zones"
+                class="nav-link"
+            >
+                <span>◉</span>
+                Live Zones
+            </a>
+
+
+            <a
+                href="#analytics"
+                class="nav-link"
+            >
+                <span>◒</span>
+                Analytics
+            </a>
+
+
+            <a
+                href="#alerts"
+                class="nav-link"
+            >
+                <span>!</span>
+                Alerts
+            </a>
+
+        </nav>
+
+
+        <div class="sidebar-footer">
+
+            <div class="online-pill">
+
+                <span class="pulse-dot"></span>
+
+                System Online
+
+            </div>
+
+            <p>
+                YatraSetu v1.0
+            </p>
+
+        </div>
+
+    </aside>
+
+
+
+    <main class="main-content">
+
+
+        <header class="topbar">
+
+            <button
+                class="mobile-menu"
+                id="mobileMenu"
+                aria-label="Open menu"
+            >
+                ☰
+            </button>
+
+
+            <div>
+
+                <p class="section-kicker">
+                    LIVE MONITORING
+                </p>
+
+                <h2 id="dashboardTitle">
+                    Command Dashboard
+                </h2>
+
+            </div>
+
+
+            <div class="topbar-actions">
+
+                <div
+                    class="api-status"
+                    id="apiStatus"
+                >
+
+                    <span class="status-dot"></span>
+
+                    <span>
+                        Connected
+                    </span>
+
+                </div>
+
+
+                <button
+                    class="icon-btn"
+                    id="refreshBtn"
+                    title="Refresh"
+                >
+                    ↻
+                </button>
+
+            </div>
+
+        </header>
+
+
+
+        <section
+            class="hero"
+            id="dashboard"
+        >
+
+            <div class="hero-content">
+
+                <div class="hero-badge">
+                    SMART CROWD MANAGEMENT
+                </div>
+
+
+                <h1>
+                    Welcome to
+                    <span id="templeName">
+                        YatraSetu
+                    </span>
+                    👋
+                </h1>
+
+
+                <p id="templeLocation">
+                    Monitor pilgrimage zones,
+                    crowd density and safety
+                    conditions in real time.
+                </p>
+
+
+                <div class="hero-meta">
+
+                    <span>
+                        ● Live data
+                    </span>
+
+                    <span>
+                        •
+                    </span>
+
+                    <span>
+                        Auto refresh every 5 seconds
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="hero-orbit">
+
+                <div class="orbit orbit-1"></div>
+
+                <div class="orbit orbit-2"></div>
+
+                <div class="hero-core">
+                    ॐ
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <section class="stats-grid">
+
+
+            <article class="stat-card">
+
+                <div class="stat-icon">
+                    👥
+                </div>
+
+                <div>
+
+                    <span>
+                        Total Pilgrims
+                    </span>
+
+                    <strong id="totalCrowd">
+                        0
+                    </strong>
+
+                    <small>
+                        across monitored zones
+                    </small>
+
+                </div>
+
+            </article>
+
+
+
+            <article class="stat-card">
+
+                <div class="stat-icon">
+                    ◉
+                </div>
+
+                <div>
+
+                    <span>
+                        Average Occupancy
+                    </span>
+
+                    <strong id="avgOccupancy">
+                        0%
+                    </strong>
+
+                    <small>
+                        of total capacity
+                    </small>
+
+                </div>
+
+            </article>
+
+
+
+            <article class="stat-card">
+
+                <div class="stat-icon">
+                    ⚠
+                </div>
+
+                <div>
+
+                    <span>
+                        High Risk Zones
+                    </span>
+
+                    <strong id="highRisk">
+                        0
+                    </strong>
+
+                    <small>
+                        high or critical
+                    </small>
+
+                </div>
+
+            </article>
+
+
+
+            <article class="stat-card">
+
+                <div class="stat-icon">
+                    ✓
+                </div>
+
+                <div>
+
+                    <span>
+                        Active Zones
+                    </span>
+
+                    <strong id="activeZones">
+                        0
+                    </strong>
+
+                    <small>
+                        currently monitored
+                    </small>
+
+                </div>
+
+            </article>
+
+        </section>
+
+
+
+        
+<section class="super-controls panel" id="superControls">
+    <div class="panel-heading">
+        <div>
+            <p class="section-kicker">SUPER ADMIN</p>
+            <h3>Temple Control Center</h3>
+        </div>
+        <span class="panel-chip">FULL ACCESS</span>
+    </div>
+
+    <div class="control-grid">
+        <input id="adminZoneName" placeholder="Zone name">
+        <select id="adminZoneType">
+            <option value="ENTRANCE">Entrance</option>
+            <option value="QUEUE">Queue</option>
+            <option value="DARSHAN">Darshan Area</option>
+            <option value="PARKING">Parking</option>
+            <option value="EXIT">Exit</option>
+            <option value="OTHER">Other</option>
+        </select>
+        <input id="adminZoneCapacity" type="number" min="1" placeholder="Capacity">
+    </div>
+
+    <div class="control-actions">
+        <button class="admin-primary" id="adminAddZone">+ Add Zone</button>
+        <button class="admin-neutral" id="adminResetData">Reset All Crowd Data</button>
+        <button class="admin-danger" id="adminDeleteTemple">Delete This Temple</button>
+    </div>
+
+    <div class="admin-message" id="adminMessage"></div>
+    <div class="admin-zone-list" id="adminZoneList"></div>
+</section>
+
+
+
+<section class="temple-zone-access" id="templeZoneAccess">
+    <div>
+        <h3>Zone Management</h3>
+        <p>Add and manage monitoring zones for your temple.</p>
+    </div>
+    <button type="button" id="manageZonesBtn">
+        + Manage Zones
+    </button>
+</section>
+
+
+        <section
+            class="section-block"
+            id="zones"
+        >
+
+            <div class="section-heading">
+
+                <div>
+
+                    <p class="section-kicker">
+                        REAL-TIME DATA
+                    </p>
+
+                    <h2>
+                        Live Zone Monitoring
+                    </h2>
+
+                </div>
+
+
+                <div class="updated-box">
+
+                    Last updated
+
+                    <strong id="lastUpdated">
+                        --:--:--
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="zonesContainer"
+                class="zones-grid"
+            >
+
+                <div class="loading-card">
+                    Loading zone data...
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <section
+            class="analytics-grid"
+            id="analytics"
+        >
+
+
+            <article class="panel chart-panel">
+
+                <div class="panel-heading">
+
+                    <div>
+
+                        <p class="section-kicker">
+                            CAPACITY ANALYSIS
+                        </p>
+
+                        <h3>
+                            Crowd vs Capacity
+                        </h3>
+
+                    </div>
+
+
+                    <span class="panel-chip">
+                        LIVE
+                    </span>
+
+                </div>
+
+
+                <div class="chart-wrap">
+
+                    <canvas
+                        id="crowdChart"
+                    ></canvas>
+
+                </div>
+
+            </article>
+
+
+
+            <article class="panel">
+
+                <div class="panel-heading">
+
+                    <div>
+
+                        <p class="section-kicker">
+                            SAFETY OVERVIEW
+                        </p>
+
+                        <h3>
+                            Risk Distribution
+                        </h3>
+
+                    </div>
+
+
+                    <span class="shield">
+                        🛡
+                    </span>
+
+                </div>
+
+
+                <div
+                    class="risk-summary"
+                    id="riskSummary"
+                ></div>
+
+            </article>
+
+        </section>
+
+
+
+        <section
+            class="admin-section panel"
+            id="alerts"
+        >
+
+            <div class="panel-heading">
+
+                <div>
+
+                    <p class="section-kicker">
+                        CONTROL PANEL
+                    </p>
+
+                    <h3>
+                        Update Crowd Data
+                    </h3>
+
+                </div>
+
+
+                <span class="panel-chip">
+                    ADMIN
+                </span>
+
+            </div>
+
+
+            <form
+                id="crowdForm"
+                class="crowd-form"
+            >
+
+                <label>
+
+                    <span>
+                        Zone
+                    </span>
+
+                    <select
+                        id="zoneSelect"
+                        required
+                    ></select>
+
+                </label>
+
+
+                <label>
+
+                    <span>
+                        People Count
+                    </span>
+
+                    <input
+                        id="peopleCount"
+                        type="number"
+                        min="0"
+                        placeholder="Enter current crowd"
+                        required
+                    >
+
+                </label>
+
+
+                <button
+                    class="primary-btn"
+                    type="submit"
+                >
+
+                    <span>
+                        Update Crowd
+                    </span>
+
+                    <span>
+                        →
+                    </span>
+
+                </button>
+
+            </form>
+
+
+            <div
+                class="form-message"
+                id="formMessage"
+            ></div>
+
+        </section>
+
+
+
+        <footer class="footer">
+
+            <span>
+                © 2026 YatraSetu
+            </span>
+
+            <span>
+                Smart • Safe • Connected
+            </span>
+
+        </footer>
+
+    </main>
+
+</div>
+
+
+<div
+    class="toast"
+    id="toast"
+></div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+(function ensureTempleAdminTempleId() {
+    const params = new URLSearchParams(window.location.search);
+    const role = localStorage.getItem("yatrasetu_role");
+    const templeId = localStorage.getItem("yatrasetu_temple_id");
+
+    if (role === "TEMPLE_ADMIN" && !params.get("temple_id") && templeId) {
+        window.location.replace(
+            `index.html?temple_id=${encodeURIComponent(templeId)}`
+        );
+    }
+})();
+</script>
+
+<script>
+(function initTempleAdminZoneAccess() {
+    const role = localStorage.getItem("yatrasetu_role");
+    const templeId = localStorage.getItem("yatrasetu_temple_id");
+    const panel = document.getElementById("templeZoneAccess");
+    const button = document.getElementById("manageZonesBtn");
+
+    if (role !== "TEMPLE_ADMIN" || !templeId || !panel || !button) return;
+
+    panel.classList.add("show");
+
+    button.addEventListener("click", function () {
+        window.location.href =
+            `zone-setup.html?temple_id=${encodeURIComponent(templeId)}&mode=temple`;
+    });
+})();
+</script>
+
+<script src="script.js"></script>
+
+
+<script>
+(async function initSuperAdminControls() {
+    const panel = document.getElementById("superControls");
+    const message = document.getElementById("adminMessage");
+    const zoneList = document.getElementById("adminZoneList");
+    const templeId = new URLSearchParams(location.search).get("temple_id");
+
+    if (!panel || !templeId || typeof supabaseClient === "undefined") return;
+
+    async function session() {
+        const { data: { session }, error } =
+            await supabaseClient.auth.getSession();
+        if (error || !session?.access_token) return null;
+        return session;
+    }
+
+    async function isSuperAdmin() {
+        const s = await session();
+        if (!s) return false;
+
+        const { data, error } = await supabaseClient
+            .from("users")
+            .select("roles")
+            .eq("auth_user_id", s.user.id)
+            .single();
+
+        return !error && data?.roles === "SUPER_ADMIN";
+    }
+
+    async function adminFetch(url, options = {}) {
+        const s = await session();
+        if (!s) throw new Error("Authorization token required");
+
+        const headers = new Headers(options.headers || {});
+        headers.set("Authorization", "Bearer " + s.access_token);
+
+        return fetch(url, {
+            ...options,
+            headers,
+            cache: "no-store"
+        });
+    }
+
+    function msg(text, ok = false) {
+        message.textContent = text;
+        message.style.color = ok ? "#3d7a50" : "#a23c2c";
+    }
+
+    function esc(v) {
+        return String(v ?? "")
+            .replaceAll("&","&amp;")
+            .replaceAll("<","&lt;")
+            .replaceAll(">","&gt;")
+            .replaceAll('"',"&quot;")
+            .replaceAll("'","&#039;");
+    }
+
+    async function loadAdminZones() {
+        const r = await adminFetch(
+            `/api/temples/${encodeURIComponent(templeId)}/zones`
+        );
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.detail || "Unable to load zones.");
+
+        zoneList.innerHTML = data.length ? data.map(z => `
+            <div class="admin-zone-row">
+                <div><strong>${esc(z.name)}</strong><br><span>${esc(z.type)}</span></div>
+                <div><span>Capacity</span><br><strong>${z.capacity}</strong></div>
+                <div><span>Current</span><br><strong>${z.crowd_count}</strong></div>
+                <button class="admin-danger" onclick="editAdminZone(${z.id}, '${esc(z.name)}', '${esc(z.type)}', ${z.capacity}, ${z.crowd_count})">Edit</button>
+                <button class="admin-danger" onclick="deleteAdminZone(${z.id}, '${esc(z.name)}')">Delete</button>
+            </div>
+        `).join("") : "<div class='empty-zone'>No zones configured.</div>";
+    }
+
+    window.editAdminZone = async function(id, name, type, capacity, crowd) {
+        const newName = prompt("Zone name:", name);
+        if (newName === null) return;
+        const newCapacity = prompt("Capacity:", capacity);
+        if (newCapacity === null) return;
+        const newCrowd = prompt("Current crowd:", crowd);
+        if (newCrowd === null) return;
+
+        try {
+            const qs = new URLSearchParams({
+                name: newName.trim(),
+                type,
+                capacity: String(Number(newCapacity)),
+                crowd_count: String(Number(newCrowd))
+            });
+            const r = await adminFetch(
+                `/api/admin/zones/${id}?${qs.toString()}`,
+                { method: "PUT" }
+            );
+            const d = await r.json();
+            if (!r.ok) throw new Error(d.detail || "Zone update failed.");
+            msg("Zone updated successfully.", true);
+            await loadAdminZones();
+            if (typeof loadDashboard === "function") await loadDashboard();
+        } catch(e) { msg(e.message); }
+    };
+
+    window.deleteAdminZone = async function(id, name) {
+        if (!confirm(`Delete zone "${name}" and its crowd history?`)) return;
+        try {
+            const r = await adminFetch(
+                `/api/admin/zones/${id}`,
+                { method: "DELETE" }
+            );
+            const d = await r.json();
+            if (!r.ok) throw new Error(d.detail || "Zone deletion failed.");
+            msg("Zone deleted successfully.", true);
+            await loadAdminZones();
+            if (typeof loadDashboard === "function") await loadDashboard();
+        } catch(e) { msg(e.message); }
+    };
+
+    document.getElementById("adminAddZone").onclick = async function() {
+        const name = document.getElementById("adminZoneName").value.trim();
+        const type = document.getElementById("adminZoneType").value;
+        const capacity = Number(document.getElementById("adminZoneCapacity").value);
+
+        if (!name || !Number.isInteger(capacity) || capacity < 1) {
+            msg("Enter a zone name and valid capacity.");
+            return;
+        }
+
+        try {
+            const qs = new URLSearchParams({name, type, capacity: String(capacity)});
+            const r = await adminFetch(
+                `/api/temples/${encodeURIComponent(templeId)}/zones?${qs.toString()}`,
+                { method: "POST" }
+            );
+            const d = await r.json();
+            if (!r.ok) throw new Error(d.detail || "Unable to add zone.");
+            document.getElementById("adminZoneName").value = "";
+            document.getElementById("adminZoneCapacity").value = "";
+            msg("Zone added successfully.", true);
+            await loadAdminZones();
+            if (typeof loadDashboard === "function") await loadDashboard();
+        } catch(e) { msg(e.message); }
+    };
+
+    document.getElementById("adminResetData").onclick = async function() {
+        if (!confirm("Reset all historical crowd data for every zone in this temple?")) return;
+        try {
+            const r = await adminFetch(
+                `/api/admin/temples/${encodeURIComponent(templeId)}/reset-crowd`,
+                { method: "POST" }
+            );
+            const d = await r.json();
+            if (!r.ok) throw new Error(d.detail || "Reset failed.");
+            msg("Crowd data reset successfully.", true);
+            if (typeof loadDashboard === "function") await loadDashboard();
+        } catch(e) { msg(e.message); }
+    };
+
+    document.getElementById("adminDeleteTemple").onclick = async function() {
+        const confirmation = prompt(
+            "This permanently deletes the temple, its zones, crowd history, alerts and Temple Admin account.\nType DELETE to continue:"
+        );
+        if (confirmation !== "DELETE") {
+            msg("Deletion cancelled.");
+            return;
+        }
+
+        try {
+            const r = await adminFetch(
+                `/api/admin/temples/${encodeURIComponent(templeId)}`,
+                { method: "DELETE" }
+            );
+            const d = await r.json();
+            if (!r.ok) throw new Error(d.detail || "Temple deletion failed.");
+            location.href = "super-admin.html";
+        } catch(e) { msg(e.message); }
+    };
+
+    if (await isSuperAdmin()) {
+        panel.classList.add("show");
+        try { await loadAdminZones(); } catch(e) { msg(e.message); }
+    }
+})();
+</script>
+
+</body>
+
+</html>
