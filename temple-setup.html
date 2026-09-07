@@ -8,6 +8,8 @@
     <title>Temple Setup | YatraSetu</title>
 
     <link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 </head>
 
 <body>
@@ -142,6 +144,63 @@
 
                 <div class="form-section">
 
+                    <h3>Temple Administrator</h3>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label for="adminName">
+                                Admin Name
+                            </label>
+
+                            <input
+                                type="text"
+                                id="adminName"
+                                placeholder="Enter administrator name"
+                                required
+                            >
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label for="adminEmail">
+                                Admin Email
+                            </label>
+
+                            <input
+                                type="email"
+                                id="adminEmail"
+                                placeholder="admin@example.com"
+                                required
+                            >
+
+                        </div>
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label for="adminPassword">
+                            Temporary Password
+                        </label>
+
+                        <input
+                            type="password"
+                            id="adminPassword"
+                            minlength="6"
+                            placeholder="Minimum 6 characters"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-section">
+
                     <h3>Contact Information</h3>
 
                     <div class="form-group">
@@ -190,96 +249,111 @@ const API_URL = "";
 const form = document.getElementById("templeForm");
 const message = document.getElementById("formMessage");
 
+async function getSession() {
+    if (typeof supabaseClient === "undefined") {
+        throw new Error("Supabase configuration is missing.");
+    }
+
+    const { data: { session }, error } =
+        await supabaseClient.auth.getSession();
+
+    if (error || !session?.access_token) {
+        throw new Error("Authorization token required. Please login again.");
+    }
+
+    return session;
+}
+
+function setMessage(text, success = false) {
+    message.textContent = text;
+    message.classList.toggle("success", success);
+}
 
 form.addEventListener("submit", async function(event) {
 
     event.preventDefault();
 
-    const name =
-        document.getElementById("templeName").value.trim();
+    const name = document.getElementById("templeName").value.trim();
+    const location = document.getElementById("location").value.trim();
+    const description = document.getElementById("description").value.trim();
+    const opening_time = document.getElementById("openingTime").value;
+    const closing_time = document.getElementById("closingTime").value;
+    const contact = document.getElementById("contact").value.trim();
 
-    const location =
-        document.getElementById("location").value.trim();
+    const admin_name = document.getElementById("adminName").value.trim();
+    const admin_email = document.getElementById("adminEmail").value.trim();
+    const admin_password = document.getElementById("adminPassword").value;
 
-    const description =
-        document.getElementById("description").value.trim();
+    if (!name || !location || !opening_time || !closing_time || !contact ||
+        !admin_name || !admin_email || admin_password.length < 6) {
+        setMessage("Please fill all required fields. Password must be at least 6 characters.");
+        return;
+    }
 
-    const opening_time =
-        document.getElementById("openingTime").value;
-
-    const closing_time =
-        document.getElementById("closingTime").value;
-
-    const contact =
-        document.getElementById("contact").value.trim();
-
-
-    message.textContent = "Creating temple...";
-
-
-    const params = new URLSearchParams({
-
-        name,
-        location,
-        description,
-        opening_time,
-        closing_time,
-        contact
-
-    });
-
+    setMessage("Creating temple and Temple Admin...");
 
     try {
 
+        const session = await getSession();
+
+        const params = new URLSearchParams({
+            name,
+            location,
+            description,
+            opening_time,
+            closing_time,
+            contact,
+            admin_name,
+            admin_email,
+            admin_password
+        });
+
         const response = await fetch(
-            `${API_URL}/api/temples?${params.toString()}`,
+            `${API_URL}/api/admin/create-temple?${params.toString()}`,
             {
-                method: "POST"
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${session.access_token}`
+                }
             }
         );
 
-
-        const data = await response.json();
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                data.detail || "Failed to create temple"
-            );
-
+        let data = {};
+        try {
+            data = await response.json();
+        } catch (_) {
+            data = {};
         }
 
-message.textContent =
-    `✓ Temple created successfully. Temple ID: ${data.temple_id}`;
+        if (!response.ok) {
+            throw new Error(
+                data.detail || `Failed to create temple (${response.status})`
+            );
+        }
 
-message.classList.add("success");
+        localStorage.setItem(
+            "yatrasetu_temple_id",
+            String(data.temple_id)
+        );
 
-// Save temple ID for Zone Setup
-localStorage.setItem(
-    "yatrasetu_temple_id",
-    data.temple_id
-);
+        setMessage(
+            `✓ Temple and Temple Admin created successfully. Temple ID: ${data.temple_id}`,
+            true
+        );
 
-setTimeout(() => {
-
-    window.location.href =
-        `zone-setup.html?temple_id=${data.temple_id}`;
-
-}, 1200);
-
+        setTimeout(() => {
+            window.location.href =
+                `zone-setup.html?temple_id=${encodeURIComponent(data.temple_id)}&mode=super`;
+        }, 1200);
 
     } catch (error) {
 
-        console.error(error);
+        console.error("Temple creation error:", error);
 
-        message.textContent =
-            error.message;
-
-        message.classList.remove("success");
-
+        setMessage(
+            error.message || "Unable to create temple."
+        );
     }
-
 });
 
 </script>
