@@ -416,6 +416,9 @@ def create_temple_with_admin(
     name: str,
     location: str,
     description: str = "",
+    opening_time: str = "",
+    closing_time: str = "",
+    contact: str = "",
     admin_name: str = "",
     admin_email: str = "",
     admin_password: str = "",
@@ -579,6 +582,18 @@ def create_temple_with_admin(
             detail="Admin password must be at least 6 characters"
         )
 
+    existing_profile = (
+        db.query(users)
+        .filter(users.email == admin_email.strip())
+        .first()
+    )
+
+    if existing_profile:
+        raise HTTPException(
+            status_code=409,
+            detail="A YatraSetu user with this email already exists"
+        )
+
 
     # -----------------------------------
     # Create Temple
@@ -596,7 +611,13 @@ def create_temple_with_admin(
                 description.strip()
                 if description
                 else None
-            )
+            ),
+
+            opening_time=opening_time.strip(),
+
+            closing_time=closing_time.strip(),
+
+            contact=contact.strip()
 
         )
 
