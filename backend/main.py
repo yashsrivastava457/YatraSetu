@@ -1,5 +1,4 @@
 from fastapi import FastAPI, Depends, HTTPException, Header
-from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -7,7 +6,6 @@ from sqlalchemy.orm import Session
 from database import engine, Base, get_db
 from models import users, zone, crowddata, Alert, temples
 from risk_engine import calculate_risk
-from ai_engine import predict_for_date
 import os
 import requests
 
@@ -891,91 +889,6 @@ def create_temple_admin(
         "role": new_admin.roles
     }
 
-
-
-# ---------------------------------------------------------
-# AI CROWD PREDICTION
-# Calendar-wise 24-hour crowd forecast for Temple ID 1.
-# ---------------------------------------------------------
-
-class AICrowdPredictionRequest(BaseModel):
-    date: str
-    temperature: float = 27.0
-    rainfall: float = 0.0
-    festival_type: str = "None"
-
-
-@app.post("/api/ai/crowd-prediction")
-def ai_crowd_prediction(
-    temple_id: int,
-    request: AICrowdPredictionRequest,
-    db: Session = Depends(get_db),
-    current_user=Depends(require_temple_access)
-):
-    if temple_id != 1:
-        raise HTTPException(
-            status_code=400,
-            detail="AI crowd prediction is currently available only for Temple ID 1"
-        )
-
-    temple = (
-        db.query(temples)
-        .filter(temples.id == temple_id)
-        .first()
-    )
-
-    if not temple:
-        raise HTTPException(
-            status_code=404,
-            detail="Temple not found"
-        )
-
-    zones = (
-        db.query(zone)
-        .filter(zone.temple_id == temple_id)
-        .all()
-    )
-
-    configured_capacity = sum(
-        int(z.capacity)
-        for z in zones
-        if z.capacity and z.capacity > 0
-    )
-
-    temple_capacity = (
-        configured_capacity
-        if configured_capacity > 0
-        else 15000
-    )
-
-    try:
-        forecast = predict_for_date(
-            date_str=request.date,
-            temperature=request.temperature,
-            rainfall=request.rainfall,
-            festival_type=request.festival_type,
-            temple_capacity=temple_capacity
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=str(e)
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"AI prediction failed: {str(e)}"
-        )
-
-    return {
-        "temple_id": temple_id,
-        "date": request.date,
-        "temperature": request.temperature,
-        "rainfall": request.rainfall,
-        "festival_type": request.festival_type,
-        "temple_capacity": temple_capacity,
-        "forecast": forecast.to_dict(orient="records")
-    }
 
 # ---------------------------------------------------------
 # SUPER ADMIN: RESET TEMPLE CROWD DATA
